@@ -28,6 +28,6 @@ public class GenerateUrl {
     }
 
     public static String getBackdropImageUrl(String imageUrl) {
-        return "http://image.tmdb.org/t/p/w342/" + imageUrl;
+        return "http://image.tmdb.org/t/p/w500/" + imageUrl;
     }
 }

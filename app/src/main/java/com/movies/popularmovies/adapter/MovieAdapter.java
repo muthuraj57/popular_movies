@@ -2,20 +2,25 @@
 package com.movies.popularmovies.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.movies.popularmovies.R;
-import com.movies.popularmovies.databinding.MovieOverviewBackdropBinding;
-import com.movies.popularmovies.databinding.MovieOverviewPostcardBinding;
+import com.movies.popularmovies.activity.MovieDetailActivity;
+import com.movies.popularmovies.databinding.MovieOverviewGridItemBinding;
+import com.movies.popularmovies.databinding.MovieOverviewListItemBinding;
 import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
 import com.movies.popularmovies.modal.movies.Result;
 import com.movies.popularmovies.util.GenerateUrl;
 import com.squareup.picasso.Picasso;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.List;
 
 /**
@@ -29,11 +34,14 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private Context context;
     private List<Result> results;
     private LayoutInflater inflater;
+    private DecimalFormat decimalFormat;
 
     public MovieAdapter(Context context, int viewType) {
         this.context = context;
         this.viewType = viewType;
 
+        decimalFormat = new DecimalFormat("#.####");
+        decimalFormat.setRoundingMode(RoundingMode.FLOOR);
         inflater = LayoutInflater.from(context);
         List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
         if (movieResults != null && !movieResults.isEmpty()) {
@@ -42,10 +50,7 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     }
 
     public void setViewType(int viewType) {
-        if (this.viewType != viewType) {
-            this.viewType = viewType;
-            notifyDataSetChanged();
-        }
+        this.viewType = viewType;
     }
 
     @Override
@@ -57,15 +62,19 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         return viewType;
     }
 
+    @Override
+    public int getItemCount() {
+        return results == null ? 0 : results.size();
+    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         switch (viewType) {
             case LIST:
-                return new MovieHolder((MovieOverviewBackdropBinding) DataBindingUtil.inflate(inflater, R.layout.movie_overview_backdrop,
+                return new MovieListItemHolder((MovieOverviewListItemBinding) DataBindingUtil.inflate(inflater, R.layout.movie_overview_list_item,
                         parent, false));
             case GRID:
-                return new MoviePostCardHolder((MovieOverviewPostcardBinding) DataBindingUtil.inflate(inflater, R.layout.movie_overview_postcard,
+                return new MovieGridItemHolder((MovieOverviewGridItemBinding) DataBindingUtil.inflate(inflater, R.layout.movie_overview_grid_item,
                         parent, false));
         }
         return null;
@@ -75,45 +84,60 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         Result result = results.get(position);
 
-        if (holder instanceof MovieHolder) {
-            MovieOverviewBackdropBinding movieOverview = ((MovieHolder) holder).movieOverview;
-            movieOverview.movieName.setText(result.getTitle());
-            Picasso.with(context)
-                    .load(GenerateUrl.getBackdropImageUrl(result.getBackdrop_path()))
-                    .into(movieOverview.coverImage);
-            movieOverview.rating.setText(Float.toString(result.getVote_average()));
-            movieOverview.year.setText(result.getRelease_date().substring(0, 4));
-        } else if (holder instanceof MoviePostCardHolder) {
-            MovieOverviewPostcardBinding movieOverview = ((MoviePostCardHolder) holder).movieOverview;
-            Picasso.with(context)
-                    .load(GenerateUrl.getBackdropImageUrl(result.getPoster_path()))
-                    .into(movieOverview.coverImage1);
-            Picasso.with(context)
-                    .load(GenerateUrl.getBackdropImageUrl(result.getPoster_path()))
-                    .into(movieOverview.coverImage2);
-            movieOverview.movieName1.setText(result.getTitle());
-            movieOverview.movieName2.setText(result.getTitle());
+        if (holder instanceof MovieListItemHolder) {
+            setListItem(((MovieListItemHolder) holder).movieOverview, result);
+        } else if (holder instanceof MovieGridItemHolder) {
+            setGridItem(((MovieGridItemHolder) holder).movieOverview, result);
         }
     }
 
-    @Override
-    public int getItemCount() {
-        return results == null ? 0 : results.size();
+    private void setGridItem(MovieOverviewGridItemBinding movieOverview, Result result) {
+        openDetailActivityOnClick(movieOverview.getRoot(), result);
+        Picasso.with(context)
+                .load(GenerateUrl.getBackdropImageUrl(result.getPoster_path()))
+                .into(movieOverview.coverImage);
+        movieOverview.movieName.setText(result.getTitle());
     }
 
-    public class MovieHolder extends RecyclerView.ViewHolder {
-        MovieOverviewBackdropBinding movieOverview;
+    private void setListItem(MovieOverviewListItemBinding movieOverview, Result result) {
+        openDetailActivityOnClick(movieOverview.getRoot(), result);
+        movieOverview.movieName.setText(result.getTitle());
+        Picasso.with(context)
+                .load(GenerateUrl.getBackdropImageUrl(result.getBackdrop_path()))
+                .into(movieOverview.coverImage);
 
-        public MovieHolder(MovieOverviewBackdropBinding movieOverview) {
+        movieOverview.rating.setText(decimalFormat.format(result.getVote_average()));
+        movieOverview.year.setText(result.getRelease_date().substring(0, 4));
+    }
+
+    private void openDetailActivityOnClick(View view, final Result result){
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, MovieDetailActivity.class);
+                intent.putExtra("RESULT_KEY", results.indexOf(result));
+                context.startActivity(intent);
+            }
+        });
+    }
+
+
+    /*
+    * View Holders
+    * */
+    public class MovieListItemHolder extends RecyclerView.ViewHolder {
+        MovieOverviewListItemBinding movieOverview;
+
+        public MovieListItemHolder(MovieOverviewListItemBinding movieOverview) {
             super(movieOverview.getRoot());
             this.movieOverview = movieOverview;
         }
     }
 
-    public class MoviePostCardHolder extends RecyclerView.ViewHolder {
-        MovieOverviewPostcardBinding movieOverview;
+    public class MovieGridItemHolder extends RecyclerView.ViewHolder {
+        MovieOverviewGridItemBinding movieOverview;
 
-        public MoviePostCardHolder(MovieOverviewPostcardBinding movieOverview) {
+        public MovieGridItemHolder(MovieOverviewGridItemBinding movieOverview) {
             super(movieOverview.getRoot());
             this.movieOverview = movieOverview;
         }

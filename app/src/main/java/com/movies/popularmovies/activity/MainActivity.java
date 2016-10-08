@@ -3,6 +3,7 @@ package com.movies.popularmovies.activity;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,13 +24,16 @@ import com.movies.popularmovies.util.RequestProcessorListener;
 
 public class MainActivity extends AppCompatActivity {
 
-    MovieAdapter movieAdapter;
+    private ActivityMainBinding activityMain;
+    private MovieAdapter movieAdapter;
     private int viewType;
+    private LinearLayoutManager linearLayoutManager;
+    private GridLayoutManager gridLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        final ActivityMainBinding activityMain = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        activityMain = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         viewType = MovieAdapter.GRID;
         setSupportActionBar(activityMain.toolbar);
@@ -37,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
             return;
         }
+        linearLayoutManager = new LinearLayoutManager(this);
+        gridLayoutManager = new GridLayoutManager(this, 2);
+
         RequestProcessor requestProcessor = new RequestProcessor(this, Request.Method.GET);
         requestProcessor.setListener(new RequestProcessorListener() {
             @Override
@@ -45,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 MovieData.getInstance().addMovieResult(movieResult);
                 movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
                 activityMain.recyclerView.setAdapter(movieAdapter);
-                activityMain.recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+                activityMain.recyclerView.setLayoutManager(linearLayoutManager);
             }
 
             @Override
@@ -63,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (viewType == MovieAdapter.LIST){
+        if (viewType == MovieAdapter.LIST) {
             getMenuInflater().inflate(R.menu.list_menu, menu);
         } else {
             getMenuInflater().inflate(R.menu.grid_menu, menu);
@@ -75,13 +82,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (movieAdapter != null) {
-            switch (item.getItemId()){
+            switch (item.getItemId()) {
                 case R.id.grid_view:
-                    movieAdapter.setViewType(MovieAdapter.GRID);
+                    changeView(MovieAdapter.GRID);
                     invalidateMenu(MovieAdapter.LIST);
                     return true;
                 case R.id.list_view:
-                    movieAdapter.setViewType(MovieAdapter.LIST);
+                    changeView(MovieAdapter.LIST);
                     invalidateMenu(MovieAdapter.GRID);
                     return true;
             }
@@ -89,8 +96,27 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void invalidateMenu(int viewType){
-        if (this.viewType != viewType){
+    private void changeView(int viewType) {
+        if (movieAdapter.getViewType() != viewType) {
+            setLayoutManager(viewType);
+        }
+    }
+
+    private void setLayoutManager(int viewType) {
+        switch (viewType) {
+            case MovieAdapter.GRID:
+                activityMain.recyclerView.setLayoutManager(gridLayoutManager);
+                break;
+            case MovieAdapter.LIST:
+                activityMain.recyclerView.setLayoutManager(linearLayoutManager);
+                break;
+        }
+        movieAdapter.setViewType(viewType);
+        movieAdapter.notifyDataSetChanged();
+    }
+
+    private void invalidateMenu(int viewType) {
+        if (this.viewType != viewType) {
             this.viewType = viewType;
             invalidateOptionsMenu();
         }

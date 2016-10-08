@@ -4,6 +4,8 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -21,11 +23,13 @@ import com.movies.popularmovies.util.RequestProcessorListener;
 
 public class MainActivity extends AppCompatActivity {
 
+    MovieBackdropAdapter movieAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final ActivityMainBinding activityMain = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
+        setSupportActionBar(activityMain.toolbar);
         if (!GeneralUtils.isNetworkAvailable(this)) {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
             return;
@@ -36,7 +40,8 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(String response) {
                 MovieResult movieResult = new Gson().fromJson(response, MovieResult.class);
                 MovieData.getInstance().addMovieResult(movieResult);
-                activityMain.recyclerView.setAdapter(new MovieBackdropAdapter(MainActivity.this));
+                movieAdapter = new MovieBackdropAdapter(MainActivity.this, MovieBackdropAdapter.LIST);
+                activityMain.recyclerView.setAdapter(movieAdapter);
                 activityMain.recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
             }
 
@@ -51,5 +56,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.home_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (movieAdapter != null) {
+            switch (item.getItemId()){
+                case R.id.grid_view:
+                    movieAdapter.setViewType(MovieBackdropAdapter.GRID);
+                    return true;
+                case R.id.list_view:
+                    movieAdapter.setViewType(MovieBackdropAdapter.LIST);
+                    return true;
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

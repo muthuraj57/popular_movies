@@ -12,7 +12,7 @@ import com.android.volley.Request;
 import com.android.volley.VolleyError;
 import com.google.gson.Gson;
 import com.movies.popularmovies.R;
-import com.movies.popularmovies.adapter.MovieBackdropAdapter;
+import com.movies.popularmovies.adapter.MovieAdapter;
 import com.movies.popularmovies.databinding.ActivityMainBinding;
 import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
@@ -23,7 +23,7 @@ import com.movies.popularmovies.util.RequestProcessorListener;
 
 public class MainActivity extends AppCompatActivity {
 
-    MovieBackdropAdapter movieAdapter;
+    MovieAdapter movieAdapter;
     private int viewType;
 
     @Override
@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         final ActivityMainBinding activityMain = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
-        viewType = MovieBackdropAdapter.GRID;
+        viewType = MovieAdapter.GRID;
         setSupportActionBar(activityMain.toolbar);
         if (!GeneralUtils.isNetworkAvailable(this)) {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(String response) {
                 MovieResult movieResult = new Gson().fromJson(response, MovieResult.class);
                 MovieData.getInstance().addMovieResult(movieResult);
-                movieAdapter = new MovieBackdropAdapter(MainActivity.this, MovieBackdropAdapter.LIST);
+                movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
                 activityMain.recyclerView.setAdapter(movieAdapter);
                 activityMain.recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
             }
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (viewType == MovieBackdropAdapter.LIST){
+        if (viewType == MovieAdapter.LIST){
             getMenuInflater().inflate(R.menu.list_menu, menu);
         } else {
             getMenuInflater().inflate(R.menu.grid_menu, menu);
@@ -77,12 +77,12 @@ public class MainActivity extends AppCompatActivity {
         if (movieAdapter != null) {
             switch (item.getItemId()){
                 case R.id.grid_view:
-                    movieAdapter.setViewType(MovieBackdropAdapter.GRID);
-                    invalidateMenu(MovieBackdropAdapter.LIST);
+                    movieAdapter.setViewType(MovieAdapter.GRID);
+                    invalidateMenu(MovieAdapter.LIST);
                     return true;
                 case R.id.list_view:
-                    movieAdapter.setViewType(MovieBackdropAdapter.LIST);
-                    invalidateMenu(MovieBackdropAdapter.GRID);
+                    movieAdapter.setViewType(MovieAdapter.LIST);
+                    invalidateMenu(MovieAdapter.GRID);
                     return true;
             }
         }

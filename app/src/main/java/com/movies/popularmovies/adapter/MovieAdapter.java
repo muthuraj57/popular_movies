@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Created by muthu-3955 on 08/10/16.
  */
-public class MovieBackdropAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public static final int GRID = 0;
     public static final int LIST = 1;
@@ -30,7 +30,7 @@ public class MovieBackdropAdapter extends RecyclerView.Adapter<RecyclerView.View
     private List<Result> results;
     private LayoutInflater inflater;
 
-    public MovieBackdropAdapter(Context context, int viewType) {
+    public MovieAdapter(Context context, int viewType) {
         this.context = context;
         this.viewType = viewType;
 

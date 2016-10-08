@@ -24,11 +24,14 @@ import com.movies.popularmovies.util.RequestProcessorListener;
 public class MainActivity extends AppCompatActivity {
 
     MovieBackdropAdapter movieAdapter;
+    private int viewType;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final ActivityMainBinding activityMain = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
+        viewType = MovieBackdropAdapter.GRID;
         setSupportActionBar(activityMain.toolbar);
         if (!GeneralUtils.isNetworkAvailable(this)) {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
@@ -60,7 +63,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.home_menu, menu);
+        if (viewType == MovieBackdropAdapter.LIST){
+            getMenuInflater().inflate(R.menu.list_menu, menu);
+        } else {
+            getMenuInflater().inflate(R.menu.grid_menu, menu);
+        }
+        //getMenuInflater().inflate(R.menu.home_menu, menu);
         return true;
     }
 
@@ -70,12 +78,21 @@ public class MainActivity extends AppCompatActivity {
             switch (item.getItemId()){
                 case R.id.grid_view:
                     movieAdapter.setViewType(MovieBackdropAdapter.GRID);
+                    invalidateMenu(MovieBackdropAdapter.LIST);
                     return true;
                 case R.id.list_view:
                     movieAdapter.setViewType(MovieBackdropAdapter.LIST);
+                    invalidateMenu(MovieBackdropAdapter.GRID);
                     return true;
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void invalidateMenu(int viewType){
+        if (this.viewType != viewType){
+            this.viewType = viewType;
+            invalidateOptionsMenu();
+        }
     }
 }

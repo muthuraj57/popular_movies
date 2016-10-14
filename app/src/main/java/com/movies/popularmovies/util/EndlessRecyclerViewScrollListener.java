@@ -28,24 +28,14 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
     private int defaultNoFooterViewType = -1;
     private int footerViewType = -1;
 
+    private static final String TAG = "MovieData";
+
 
     private RecyclerView.LayoutManager mLayoutManager;
 
     public EndlessRecyclerViewScrollListener(LinearLayoutManager layoutManager) {
         init();
         this.mLayoutManager = layoutManager;
-    }
-
-    public EndlessRecyclerViewScrollListener(GridLayoutManager layoutManager) {
-        init();
-        this.mLayoutManager = layoutManager;
-        visibleThreshold = visibleThreshold * layoutManager.getSpanCount();
-    }
-
-    public EndlessRecyclerViewScrollListener(StaggeredGridLayoutManager layoutManager) {
-        init();
-        this.mLayoutManager = layoutManager;
-        visibleThreshold = visibleThreshold * layoutManager.getSpanCount();
     }
 
     //init from  self-define
@@ -56,6 +46,14 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
         int threshold = getVisibleThreshold();
         if (threshold > visibleThreshold) {
             visibleThreshold = threshold;
+        }
+    }
+
+    public void changeLayoutManager(RecyclerView.LayoutManager layoutManager){
+        init();
+        this.mLayoutManager = layoutManager;
+        if (layoutManager instanceof GridLayoutManager){
+            visibleThreshold = visibleThreshold * ((GridLayoutManager) layoutManager).getSpanCount();
         }
     }
 
@@ -82,10 +80,12 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
         if (!shouldLoadMore) {
             return;
         }
+        Log.d("MovieData", "onScrolled: loadmore");
 
         if (isUseFooterView()) {
+            Log.d(TAG, "onScrolled: user footer view");
             if (!isFooterView(adapter)) {
-
+                Log.d(TAG, "onScrolled: not isFooterView");
                 if (totalItemCount < previousTotalItemCount) {//swiprefresh reload result to change listsize ,reset pageindex
                     this.currentPage = this.startingPageIndex;
 //                            Log.i(mTag, "****totalItemCount:" + totalItemCount + ",previousTotalItemCount:" + previousTotalItemCount + ",currentpage=startingPageIndex");
@@ -97,12 +97,14 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
                 loading = false;
             }
         } else {
+            Log.d(TAG, "onScrolled: else");
             if (totalItemCount > previousTotalItemCount) {
+                Log.d(TAG, "onScrolled: loading false");
                 loading = false;
             }
         }
-
         if (!loading) {
+            Log.d("MovieData", "onScrolled: loading");
 
             // If it isn’t currently loading, we check to see if we have breached
             // the visibleThreshold and need to reload more data.

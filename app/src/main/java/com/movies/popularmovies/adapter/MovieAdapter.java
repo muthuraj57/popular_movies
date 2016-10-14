@@ -70,7 +70,12 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public int getItemCount() {
         if (results != null) {
             if (adapterSize < results.size()) {
-                notifyItemRangeInserted(adapterSize + 1, results.size() - adapterSize);
+                try {
+                    notifyItemRangeInserted(adapterSize + 1, results.size() - adapterSize);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                ;
                 adapterSize = results.size();
             }
             return adapterSize;

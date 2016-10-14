@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +32,9 @@ public class MainActivity extends AppCompatActivity {
     private int viewType;
     private LinearLayoutManager linearLayoutManager;
     private GridLayoutManager gridLayoutManager;
+    private EndlessRecyclerViewScrollListener scrollListener;
+
+    private static final String TAG = "MovieData";
 
     /*
     * To save scroll position to retain the position on changing view
@@ -53,7 +57,47 @@ public class MainActivity extends AppCompatActivity {
         linearLayoutManager = new LinearLayoutManager(this);
         gridLayoutManager = new GridLayoutManager(this, 2);
 
+        setListeners();
         getData();
+    }
+
+    private void setListeners() {
+        scrollListener = new EndlessRecyclerViewScrollListener(linearLayoutManager) {
+            @Override
+            public int getFooterViewType(int defaultNoFooterViewType) {
+                return -1;
+            }
+
+            @Override
+            public void onLoadMore(final int page, final int totalItemsCount) {
+                Log.d(TAG, "onLoadMore: "+page);
+                if (movieAdapter.getItemCount() >= page * 20) {
+                    Log.d(TAG, "onLoadMore: return");
+                    return;
+                }
+                RequestProcessor requestProcessor = new RequestProcessor(MainActivity.this, Request.Method.GET);
+                requestProcessor.setListener(new RequestProcessorListener() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (movieAdapter.getItemCount() >= page * 20) {
+                            return;
+                        }
+                        //PreferenceUtil.storeData(MainActivity.this, response);
+                        MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
+                    }
+
+                    @Override
+                    public void onLoading() {
+                    }
+
+                    @Override
+                    public void onError(VolleyError error) {
+
+                    }
+                });
+                requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl(page));
+            }
+        };
     }
 
     private void getData() {
@@ -90,40 +134,7 @@ public class MainActivity extends AppCompatActivity {
         movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
         activityMain.recyclerView.setAdapter(movieAdapter);
         activityMain.recyclerView.setLayoutManager(linearLayoutManager);
-        activityMain.recyclerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(linearLayoutManager) {
-            @Override
-            public int getFooterViewType(int defaultNoFooterViewType) {
-                return 0;
-            }
-
-            @Override
-            public void onLoadMore(final int page, final int totalItemsCount) {
-                if (movieAdapter.getItemCount() >= page * 20) {
-                    return;
-                }
-                RequestProcessor requestProcessor = new RequestProcessor(MainActivity.this, Request.Method.GET);
-                requestProcessor.setListener(new RequestProcessorListener() {
-                    @Override
-                    public void onSuccess(String response) {
-                        if (movieAdapter.getItemCount() >= page * 20) {
-                            return;
-                        }
-                        //PreferenceUtil.storeData(MainActivity.this, response);
-                        MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
-                    }
-
-                    @Override
-                    public void onLoading() {
-                    }
-
-                    @Override
-                    public void onError(VolleyError error) {
-
-                    }
-                });
-                requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl(page));
-            }
-        });
+        activityMain.recyclerView.addOnScrollListener(scrollListener);
     }
 
     @Override
@@ -144,10 +155,12 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.grid_view:
                     changeView(MovieAdapter.GRID);
                     invalidateMenu(MovieAdapter.LIST);
+                    scrollListener.changeLayoutManager(gridLayoutManager);
                     return true;
                 case R.id.list_view:
                     changeView(MovieAdapter.LIST);
                     invalidateMenu(MovieAdapter.GRID);
+                    scrollListener.changeLayoutManager(linearLayoutManager);
                     return true;
             }
         }

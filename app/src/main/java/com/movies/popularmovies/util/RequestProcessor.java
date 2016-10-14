@@ -150,7 +150,7 @@ public class RequestProcessor {
 
 
         Log.d("execute ", url);//no i18n
-        if (GeneralUtils.isNetworkAvailable(context)) {
+        if (Util.isNetworkAvailable(context)) {
             if (mListener != null) {
                 String methodStr = "";//no i18n
 

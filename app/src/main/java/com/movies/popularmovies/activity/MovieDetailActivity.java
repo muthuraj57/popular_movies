@@ -2,9 +2,11 @@
 package com.movies.popularmovies.activity;
 
 import android.databinding.DataBindingUtil;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.transition.TransitionInflater;
 
 import com.movies.popularmovies.R;
 import com.movies.popularmovies.databinding.MovieDetailBinding;
@@ -33,6 +35,11 @@ public class MovieDetailActivity extends AppCompatActivity{
         if (index == -1){
             return;
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setSharedElementEnterTransition(TransitionInflater.from(this).inflateTransition(R.transition.shared_element_transition));
+        }
+
         List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
         if (movieResults == null || movieResults.isEmpty()) {
             return;

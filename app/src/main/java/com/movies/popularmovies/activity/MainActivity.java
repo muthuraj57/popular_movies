@@ -7,6 +7,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -17,10 +18,11 @@ import com.movies.popularmovies.adapter.MovieAdapter;
 import com.movies.popularmovies.databinding.ActivityMainBinding;
 import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
-import com.movies.popularmovies.util.GeneralUtils;
 import com.movies.popularmovies.util.GenerateUrl;
+import com.movies.popularmovies.util.PreferenceUtil;
 import com.movies.popularmovies.util.RequestProcessor;
 import com.movies.popularmovies.util.RequestProcessorListener;
+import com.movies.popularmovies.util.Util;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,6 +32,12 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayoutManager linearLayoutManager;
     private GridLayoutManager gridLayoutManager;
 
+    /*
+    * To save scroll position to retain the position on changing view
+    * */
+    private int gridScrollPosition;
+    private int listScrollPosition;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,35 +45,50 @@ public class MainActivity extends AppCompatActivity {
 
         viewType = MovieAdapter.GRID;
         setSupportActionBar(activityMain.toolbar);
-        if (!GeneralUtils.isNetworkAvailable(this)) {
+        if (!Util.isNetworkAvailable(this) && PreferenceUtil.getData(this) == null) {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
             return;
         }
         linearLayoutManager = new LinearLayoutManager(this);
         gridLayoutManager = new GridLayoutManager(this, 2);
 
-        RequestProcessor requestProcessor = new RequestProcessor(this, Request.Method.GET);
-        requestProcessor.setListener(new RequestProcessorListener() {
-            @Override
-            public void onSuccess(String response) {
-                MovieResult movieResult = new Gson().fromJson(response, MovieResult.class);
-                MovieData.getInstance().addMovieResult(movieResult);
-                movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
-                activityMain.recyclerView.setAdapter(movieAdapter);
-                activityMain.recyclerView.setLayoutManager(linearLayoutManager);
-            }
+        getData();
+    }
 
-            @Override
-            public void onLoading() {
+    private void getData() {
+        String movieData = PreferenceUtil.getData(this);
+        if (movieData == null) {
+            RequestProcessor requestProcessor = new RequestProcessor(this, Request.Method.GET);
+            requestProcessor.setListener(new RequestProcessorListener() {
+                @Override
+                public void onSuccess(String response) {
+                    PreferenceUtil.storeData(MainActivity.this, response);
+                    setAdapter(response);
+                    clearLoader();
+                }
 
-            }
+                @Override
+                public void onLoading() {
+                    setLoader();
+                }
 
-            @Override
-            public void onError(VolleyError error) {
+                @Override
+                public void onError(VolleyError error) {
 
-            }
-        });
-        requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
+                }
+            });
+            requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
+        } else {
+            setAdapter(movieData);
+        }
+    }
+
+    private void setAdapter(String response) {
+        MovieResult movieResult = new Gson().fromJson(response, MovieResult.class);
+        MovieData.getInstance().addMovieResult(movieResult);
+        movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
+        activityMain.recyclerView.setAdapter(movieAdapter);
+        activityMain.recyclerView.setLayoutManager(linearLayoutManager);
     }
 
     @Override
@@ -105,14 +128,48 @@ public class MainActivity extends AppCompatActivity {
     private void setLayoutManager(int viewType) {
         switch (viewType) {
             case MovieAdapter.GRID:
+
+                /*
+                * Get the list scroll position and save it
+                * */
+                listScrollPosition = linearLayoutManager.findFirstVisibleItemPosition();
+
+                /*
+                * Change the layout and set view type as grid
+                * */
                 activityMain.recyclerView.setLayoutManager(gridLayoutManager);
+                movieAdapter.setViewType(viewType);
+                movieAdapter.notifyDataSetChanged();
+
+                /*
+                * If grid position already saved, scroll to that position
+                * */
+                if (gridScrollPosition - 1 >= 0) {
+                    activityMain.recyclerView.scrollToPosition(gridScrollPosition);
+                }
                 break;
             case MovieAdapter.LIST:
+
+                /*
+                * Get the list scroll position and save it
+                * */
+                gridScrollPosition = gridLayoutManager.findFirstVisibleItemPosition();
+
+                /*
+                * Change the layout and set view type as list
+                * */
                 activityMain.recyclerView.setLayoutManager(linearLayoutManager);
+                movieAdapter.setViewType(viewType);
+                movieAdapter.notifyDataSetChanged();
+
+                /*
+                * If list position already saved, scroll to that position
+                * */
+                if (listScrollPosition - 1 >= 0) {
+                    activityMain.recyclerView.scrollToPosition(listScrollPosition);
+                }
                 break;
         }
-        movieAdapter.setViewType(viewType);
-        movieAdapter.notifyDataSetChanged();
     }
 
     private void invalidateMenu(int viewType) {
@@ -120,5 +177,15 @@ public class MainActivity extends AppCompatActivity {
             this.viewType = viewType;
             invalidateOptionsMenu();
         }
+    }
+
+    private void setLoader() {
+        activityMain.progressBar.setVisibility(View.VISIBLE);
+        activityMain.scrollView.setVisibility(View.INVISIBLE);
+    }
+
+    private void clearLoader() {
+        activityMain.progressBar.setVisibility(View.INVISIBLE);
+        activityMain.scrollView.setVisibility(View.VISIBLE);
     }
 }

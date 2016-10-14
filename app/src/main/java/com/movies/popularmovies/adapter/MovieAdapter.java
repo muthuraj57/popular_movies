@@ -1,9 +1,12 @@
 /* $Id$ */
 package com.movies.popularmovies.adapter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +20,7 @@ import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
 import com.movies.popularmovies.modal.movies.Result;
 import com.movies.popularmovies.util.GenerateUrl;
+import com.movies.popularmovies.util.Util;
 import com.squareup.picasso.Picasso;
 
 import java.math.RoundingMode;
@@ -35,12 +39,14 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private List<Result> results;
     private LayoutInflater inflater;
     private DecimalFormat decimalFormat;
+    private int screenWidth;
 
     public MovieAdapter(Context context, int viewType) {
         this.context = context;
         this.viewType = viewType;
 
-        decimalFormat = new DecimalFormat("#.####");
+        screenWidth = Util.getDisplayMetrics(context).x;
+        decimalFormat = new DecimalFormat("#.#");
         decimalFormat.setRoundingMode(RoundingMode.FLOOR);
         inflater = LayoutInflater.from(context);
         List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
@@ -91,10 +97,11 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
     }
 
-    private void setGridItem(MovieOverviewGridItemBinding movieOverview, Result result) {
+    private void setGridItem(final MovieOverviewGridItemBinding movieOverview, Result result) {
+        movieOverview.getRoot().getLayoutParams().width = screenWidth / 2;
         openDetailActivityOnClick(movieOverview.getRoot(), result);
         Picasso.with(context)
-                .load(GenerateUrl.getBackdropImageUrl(result.getPoster_path()))
+                .load(GenerateUrl.getGridItemImageUrl(screenWidth, result.getPoster_path()))
                 .into(movieOverview.coverImage);
         movieOverview.movieName.setText(result.getTitle());
     }
@@ -110,13 +117,23 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         movieOverview.year.setText(result.getRelease_date().substring(0, 4));
     }
 
-    private void openDetailActivityOnClick(View view, final Result result){
+    private void openDetailActivityOnClick(final View view, final Result result) {
         view.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, MovieDetailActivity.class);
                 intent.putExtra("RESULT_KEY", results.indexOf(result));
-                context.startActivity(intent);
+
+                if (DataBindingUtil.getBinding(view) instanceof MovieOverviewListItemBinding) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                        MovieOverviewListItemBinding listItemBinding = DataBindingUtil.getBinding(v);
+                        Pair<View, String> coverImage = Pair.create((View) listItemBinding.coverImage, listItemBinding.coverImage.getTransitionName());
+                        ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation((Activity) context, coverImage);
+                        context.startActivity(intent, optionsCompat.toBundle());
+                    }
+                } else {
+                    context.startActivity(intent);
+                }
             }
         });
     }

@@ -30,4 +30,31 @@ public class GenerateUrl {
     public static String getBackdropImageUrl(String imageUrl) {
         return "http://image.tmdb.org/t/p/w500/" + imageUrl;
     }
+
+    /*
+    * Grid image url
+    * Set width of image based on display width.
+    **/
+    public static String getGridItemImageUrl(int screenWidth, String imageUrl) {
+        String widthPath = "w92";
+
+        /*
+        *  Here, we show two items per row.
+        *  Hence we divide screen width by 2 to get single item width
+        *  */
+        screenWidth /= 2;
+
+        if (screenWidth >= 780) {
+            widthPath = "w780";
+        } else if (screenWidth >= 500) {
+            widthPath = "w500";
+        } else if (screenWidth >= 342) {
+            widthPath = "w342";
+        } else if (screenWidth >= 185) {
+            widthPath = "w185";
+        } else if (screenWidth >= 154) {
+            widthPath = "w154";
+        }
+        return "http://image.tmdb.org/t/p/" + widthPath + "/" + imageUrl;
+    }
 }

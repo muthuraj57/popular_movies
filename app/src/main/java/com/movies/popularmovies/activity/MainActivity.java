@@ -16,7 +16,6 @@ import com.google.gson.Gson;
 import com.movies.popularmovies.R;
 import com.movies.popularmovies.adapter.MovieAdapter;
 import com.movies.popularmovies.databinding.ActivityMainBinding;
-import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
 import com.movies.popularmovies.util.GenerateUrl;
 import com.movies.popularmovies.util.PreferenceUtil;
@@ -46,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         viewType = MovieAdapter.GRID;
         setSupportActionBar(activityMain.toolbar);
         if (!Util.isNetworkAvailable(this) && PreferenceUtil.getData(this) == null) {
+            clearLoader();
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
             return;
         }
@@ -79,13 +79,13 @@ public class MainActivity extends AppCompatActivity {
             });
             requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
         } else {
+            clearLoader();
             setAdapter(movieData);
         }
     }
 
     private void setAdapter(String response) {
-        MovieResult movieResult = new Gson().fromJson(response, MovieResult.class);
-        MovieData.getInstance().addMovieResult(movieResult);
+        MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
         movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
         activityMain.recyclerView.setAdapter(movieAdapter);
         activityMain.recyclerView.setLayoutManager(linearLayoutManager);

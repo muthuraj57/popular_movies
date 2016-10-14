@@ -16,7 +16,6 @@ import com.movies.popularmovies.R;
 import com.movies.popularmovies.activity.MovieDetailActivity;
 import com.movies.popularmovies.databinding.MovieOverviewGridItemBinding;
 import com.movies.popularmovies.databinding.MovieOverviewListItemBinding;
-import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
 import com.movies.popularmovies.modal.movies.Result;
 import com.movies.popularmovies.util.GenerateUrl;
@@ -49,10 +48,11 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         decimalFormat = new DecimalFormat("#.#");
         decimalFormat.setRoundingMode(RoundingMode.FLOOR);
         inflater = LayoutInflater.from(context);
-        List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
-        if (movieResults != null && !movieResults.isEmpty()) {
-            results = movieResults.get(0).getResults();
-        }
+        results = MovieResult.getInstance().getResults();
+//        List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
+//        if (movieResults != null && !movieResults.isEmpty()) {
+//            results = movieResults.get(0).getResults();
+//        }
     }
 
     public void setViewType(int viewType) {

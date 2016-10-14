@@ -10,13 +10,10 @@ import android.transition.TransitionInflater;
 
 import com.movies.popularmovies.R;
 import com.movies.popularmovies.databinding.MovieDetailBinding;
-import com.movies.popularmovies.modal.movies.MovieData;
 import com.movies.popularmovies.modal.movies.MovieResult;
 import com.movies.popularmovies.modal.movies.Result;
 import com.movies.popularmovies.util.GenerateUrl;
 import com.squareup.picasso.Picasso;
-
-import java.util.List;
 
 /**
  * Created by muthu-3955 on 08/10/16.
@@ -40,11 +37,7 @@ public class MovieDetailActivity extends AppCompatActivity{
             getWindow().setSharedElementEnterTransition(TransitionInflater.from(this).inflateTransition(R.transition.shared_element_transition));
         }
 
-        List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
-        if (movieResults == null || movieResults.isEmpty()) {
-            return;
-        }
-        result = movieResults.get(0).getResults().get(index);
+        result = MovieResult.getInstance().getResults().get(index);
 
         Picasso.with(this)
                 .load(GenerateUrl.getBackdropImageUrl(result.getBackdrop_path()))

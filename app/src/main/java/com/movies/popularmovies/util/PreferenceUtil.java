@@ -10,8 +10,8 @@ import static android.content.Context.MODE_PRIVATE;
  * Created by muthu-3955 on 14/10/16.
  */
 public class PreferenceUtil {
-    public static final String FILE_NAME = "Movie data";
-    public static final String KEY = "Data";
+    private static final String FILE_NAME = "Movie data";
+    private static final String KEY = "Data";
 
     public static void storeData(Context context, String response) {
         SharedPreferences.Editor editor = context.getSharedPreferences(FILE_NAME, MODE_PRIVATE).edit();

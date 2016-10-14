@@ -39,6 +39,7 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private LayoutInflater inflater;
     private DecimalFormat decimalFormat;
     private int screenWidth;
+    private int adapterSize;
 
     public MovieAdapter(Context context, int viewType) {
         this.context = context;
@@ -49,10 +50,7 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         decimalFormat.setRoundingMode(RoundingMode.FLOOR);
         inflater = LayoutInflater.from(context);
         results = MovieResult.getInstance().getResults();
-//        List<MovieResult> movieResults = MovieData.getInstance().getMovieResults();
-//        if (movieResults != null && !movieResults.isEmpty()) {
-//            results = movieResults.get(0).getResults();
-//        }
+        adapterSize = results.size();
     }
 
     public void setViewType(int viewType) {
@@ -70,7 +68,14 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     @Override
     public int getItemCount() {
-        return results == null ? 0 : results.size();
+        if (results != null) {
+            if (adapterSize < results.size()) {
+                notifyItemRangeInserted(adapterSize + 1, results.size() - adapterSize);
+                adapterSize = results.size();
+            }
+            return adapterSize;
+        }
+        return 0;
     }
 
     @Override

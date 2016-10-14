@@ -16,12 +16,17 @@ public class GenerateUrl {
     public static final String URL_BASE = "api.themoviedb.org";
 
     public static String getDiscoverMovieUrl() {
+        return getDiscoverMovieUrl(1);
+    }
+
+    public static String getDiscoverMovieUrl(int pageNumber){
         Uri uri = new Uri.Builder().scheme(URL_SCHEME)
                 .encodedAuthority(URL_BASE)
                 .appendEncodedPath("3")
                 .appendEncodedPath("discover")
                 .appendEncodedPath("movie")
                 .appendQueryParameter("api_key", API_KEY)
+                .appendQueryParameter("page", String.valueOf(pageNumber))
                 .build();
         Log.d(TAG, "getDiscoverMovieUrl: " + uri.toString());
         return uri.toString();

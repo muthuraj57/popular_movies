@@ -1,5 +1,7 @@
 package com.movies.popularmovies.modal.movies;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,15 +24,33 @@ public class MovieResult {
         return instance;
     }
 
-    public static void setInstance(MovieResult movieResult) {
+    public static MovieResult setInstance(MovieResult movieResult) {
+
+        /*Initialize current instance
+        * */
         getInstance();
-        if (instance.results == null || instance.results.isEmpty() && instance.page < movieResult.page) {
+
+        /*
+        * If already data present, append the incoming data
+        * */
+        if (instance.results == null || instance.results.isEmpty()/* && instance.page > movieResult.pages*/) {
             instance.results = new ArrayList<>();
         }
+        Log.d("MovieData", "setInstance: ");
+        for (Result result : movieResult.getResults()) {
+            if (!instance.results.contains(result)){
+                instance.results.add(result);
+            }
+        }
+        //instance.results.addAll(movieResult.getResults());
+
+        /*
+        * Update page number, total pages and total results
+        * */
         instance.page = movieResult.page;
         instance.total_pages = movieResult.total_pages;
         instance.total_results = movieResult.total_results;
-        instance.results.addAll(movieResult.getResults());
+        return instance;
     }
 
     private int page;

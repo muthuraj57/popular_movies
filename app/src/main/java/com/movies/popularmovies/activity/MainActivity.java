@@ -17,6 +17,7 @@ import com.movies.popularmovies.R;
 import com.movies.popularmovies.adapter.MovieAdapter;
 import com.movies.popularmovies.databinding.ActivityMainBinding;
 import com.movies.popularmovies.modal.movies.MovieResult;
+import com.movies.popularmovies.util.EndlessRecyclerViewScrollListener;
 import com.movies.popularmovies.util.GenerateUrl;
 import com.movies.popularmovies.util.PreferenceUtil;
 import com.movies.popularmovies.util.RequestProcessor;
@@ -89,6 +90,40 @@ public class MainActivity extends AppCompatActivity {
         movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
         activityMain.recyclerView.setAdapter(movieAdapter);
         activityMain.recyclerView.setLayoutManager(linearLayoutManager);
+        activityMain.recyclerView.addOnScrollListener(new EndlessRecyclerViewScrollListener(linearLayoutManager) {
+            @Override
+            public int getFooterViewType(int defaultNoFooterViewType) {
+                return 0;
+            }
+
+            @Override
+            public void onLoadMore(final int page, final int totalItemsCount) {
+                if (movieAdapter.getItemCount() >= page * 20) {
+                    return;
+                }
+                RequestProcessor requestProcessor = new RequestProcessor(MainActivity.this, Request.Method.GET);
+                requestProcessor.setListener(new RequestProcessorListener() {
+                    @Override
+                    public void onSuccess(String response) {
+                        if (movieAdapter.getItemCount() >= page * 20) {
+                            return;
+                        }
+                        //PreferenceUtil.storeData(MainActivity.this, response);
+                        MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
+                    }
+
+                    @Override
+                    public void onLoading() {
+                    }
+
+                    @Override
+                    public void onError(VolleyError error) {
+
+                    }
+                });
+                requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl(page));
+            }
+        });
     }
 
     @Override

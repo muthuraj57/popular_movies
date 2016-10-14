@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,9 +69,15 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onLoadMore(final int page, final int totalItemsCount) {
-                Log.d(TAG, "onLoadMore: "+page);
                 if (movieAdapter.getItemCount() >= page * 20) {
-                    Log.d(TAG, "onLoadMore: return");
+                    return;
+                }
+
+                /*
+                * If all the pages are loaded, show message and return
+                * */
+                if (page > MovieResult.getInstance().getTotal_pages()){
+                    Toast.makeText(MainActivity.this, "All films loaded", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 RequestProcessor requestProcessor = new RequestProcessor(MainActivity.this, Request.Method.GET);
@@ -82,8 +87,8 @@ public class MainActivity extends AppCompatActivity {
                         if (movieAdapter.getItemCount() >= page * 20) {
                             return;
                         }
-                        //PreferenceUtil.storeData(MainActivity.this, response);
                         MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
+                        PreferenceUtil.storeData(MainActivity.this, new Gson().toJson(MovieResult.getInstance()));
                     }
 
                     @Override

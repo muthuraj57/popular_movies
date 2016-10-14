@@ -28,9 +28,6 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
     private int defaultNoFooterViewType = -1;
     private int footerViewType = -1;
 
-    private static final String TAG = "MovieData";
-
-
     private RecyclerView.LayoutManager mLayoutManager;
 
     public EndlessRecyclerViewScrollListener(LinearLayoutManager layoutManager) {
@@ -80,12 +77,9 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
         if (!shouldLoadMore) {
             return;
         }
-        Log.d("MovieData", "onScrolled: loadmore");
 
         if (isUseFooterView()) {
-            Log.d(TAG, "onScrolled: user footer view");
             if (!isFooterView(adapter)) {
-                Log.d(TAG, "onScrolled: not isFooterView");
                 if (totalItemCount < previousTotalItemCount) {//swiprefresh reload result to change listsize ,reset pageindex
                     this.currentPage = this.startingPageIndex;
 //                            Log.i(mTag, "****totalItemCount:" + totalItemCount + ",previousTotalItemCount:" + previousTotalItemCount + ",currentpage=startingPageIndex");
@@ -97,9 +91,7 @@ public abstract class EndlessRecyclerViewScrollListener extends RecyclerView.OnS
                 loading = false;
             }
         } else {
-            Log.d(TAG, "onScrolled: else");
             if (totalItemCount > previousTotalItemCount) {
-                Log.d(TAG, "onScrolled: loading false");
                 loading = false;
             }
         }

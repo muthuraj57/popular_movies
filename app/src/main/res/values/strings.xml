@@ -5,4 +5,7 @@
     <string name="list_view">List View</string>
     <string name="movie_image">Movie Image</string>
     <string name="overview">Overview</string>
+    <string name="sort">Sort</string>
+    <string name="sort_by_most_popular">Most Popular</string>
+    <string name="sort_by_rating">Top Rated</string>
 </resources>

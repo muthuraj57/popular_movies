@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayoutManager linearLayoutManager;
     private GridLayoutManager gridLayoutManager;
     private EndlessRecyclerViewScrollListener scrollListener;
+    private PopupMenu menu;
 
     private static final String TAG = "MovieData";
 
@@ -76,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 /*
                 * If all the pages are loaded, show message and return
                 * */
-                if (page > MovieResult.getInstance().getTotal_pages()){
+                if (page > MovieResult.getInstance().getTotal_pages()) {
                     Toast.makeText(MainActivity.this, "All films loaded", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -166,6 +168,27 @@ public class MainActivity extends AppCompatActivity {
                     changeView(MovieAdapter.LIST);
                     invalidateMenu(MovieAdapter.GRID);
                     scrollListener.changeLayoutManager(linearLayoutManager);
+                    return true;
+                case R.id.sort:
+                    if (menu == null) {
+                        menu = new PopupMenu(this, findViewById(R.id.sort));
+                        menu.inflate(R.menu.sort_popup);
+                        menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem item) {
+                                switch (item.getItemId()) {
+                                    case R.id.most_popular:
+                                        Toast.makeText(MainActivity.this, "mos popular", Toast.LENGTH_SHORT).show();
+                                        break;
+                                    case R.id.top_rated:
+                                        Toast.makeText(MainActivity.this, "top rated", Toast.LENGTH_SHORT).show();
+                                        break;
+                                }
+                                return true;
+                            }
+                        });
+                    }
+                    menu.show();
                     return true;
             }
         }

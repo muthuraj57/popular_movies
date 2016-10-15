@@ -2,8 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/sort"
+        android:icon="@drawable/ic_sort_black_24dp"
+        android:title="@string/sort"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/grid_view"
         android:icon="@drawable/ic_view_module_black_24dp"
         android:title="@string/grid_view"
-        app:showAsAction="always"/>
+        app:showAsAction="always" />
 </menu><!-- $Id$ --> 

@@ -2,6 +2,7 @@ package com.movies.popularmovies.activity;
 
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -29,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding activityMain;
     private MovieAdapter movieAdapter;
-    private int viewType;
+    private int menuViewType;
     private LinearLayoutManager linearLayoutManager;
     private GridLayoutManager gridLayoutManager;
     private EndlessRecyclerViewScrollListener scrollListener;
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         activityMain = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
-        viewType = MovieAdapter.GRID;
+        menuViewType = MovieAdapter.GRID;
         setSupportActionBar(activityMain.toolbar);
         if (!Util.isNetworkAvailable(this) && PreferenceUtil.getData(this) == null) {
             clearLoader();
@@ -58,11 +59,68 @@ public class MainActivity extends AppCompatActivity {
         linearLayoutManager = new LinearLayoutManager(this);
         gridLayoutManager = new GridLayoutManager(this, 2);
 
-        setListeners();
+        setScrollListener();
         getData();
+
+        activityMain.swipeToRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+
+                /*
+                * If no network available, show error and return
+                * */
+                if (!Util.isNetworkAvailable(MainActivity.this) && PreferenceUtil.getData(MainActivity.this) == null) {
+                    activityMain.swipeToRefresh.setRefreshing(false);
+                    Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                /*
+                * If network is available, refresh the data and stop the refresh animation
+                * */
+                refreshData();
+                activityMain.swipeToRefresh.setRefreshing(false);
+            }
+        });
     }
 
-    private void setListeners() {
+    private void refreshData() {
+        RequestProcessor requestProcessor = new RequestProcessor(this, Request.Method.GET);
+        requestProcessor.setListener(new RequestProcessorListener() {
+            @Override
+            public void onSuccess(String response) {
+                PreferenceUtil.storeData(MainActivity.this, response);
+
+                /*
+                * If adapter is null, it should be initialized
+                * */
+                if (movieAdapter == null) {
+                    setAdapter(response);
+                }
+
+                /*
+                * If adapter already present, it is now reloaded, so notify the adapter
+                * */
+                else {
+                    movieAdapter.notifyDataSetChanged();
+                }
+                clearLoader();
+            }
+
+            @Override
+            public void onLoading() {
+                setLoader();
+            }
+
+            @Override
+            public void onError(VolleyError error) {
+
+            }
+        });
+        requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
+    }
+
+    private void setScrollListener() {
         scrollListener = new EndlessRecyclerViewScrollListener(linearLayoutManager) {
             @Override
             public int getFooterViewType(int defaultNoFooterViewType) {
@@ -110,26 +168,7 @@ public class MainActivity extends AppCompatActivity {
     private void getData() {
         String movieData = PreferenceUtil.getData(this);
         if (movieData == null) {
-            RequestProcessor requestProcessor = new RequestProcessor(this, Request.Method.GET);
-            requestProcessor.setListener(new RequestProcessorListener() {
-                @Override
-                public void onSuccess(String response) {
-                    PreferenceUtil.storeData(MainActivity.this, response);
-                    setAdapter(response);
-                    clearLoader();
-                }
-
-                @Override
-                public void onLoading() {
-                    setLoader();
-                }
-
-                @Override
-                public void onError(VolleyError error) {
-
-                }
-            });
-            requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
+            refreshData();
         } else {
             clearLoader();
             setAdapter(movieData);
@@ -146,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (viewType == MovieAdapter.LIST) {
+        if (menuViewType == MovieAdapter.LIST) {
             getMenuInflater().inflate(R.menu.list_menu, menu);
         } else {
             getMenuInflater().inflate(R.menu.grid_menu, menu);
@@ -249,19 +288,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void invalidateMenu(int viewType) {
-        if (this.viewType != viewType) {
-            this.viewType = viewType;
+        if (this.menuViewType != viewType) {
+            this.menuViewType = viewType;
             invalidateOptionsMenu();
         }
     }
 
     private void setLoader() {
         activityMain.progressBar.setVisibility(View.VISIBLE);
-        activityMain.scrollView.setVisibility(View.INVISIBLE);
+        activityMain.recyclerView.setVisibility(View.INVISIBLE);
     }
 
     private void clearLoader() {
         activityMain.progressBar.setVisibility(View.INVISIBLE);
-        activityMain.scrollView.setVisibility(View.VISIBLE);
+        activityMain.recyclerView.setVisibility(View.VISIBLE);
     }
 }

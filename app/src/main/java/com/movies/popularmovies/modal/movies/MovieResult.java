@@ -24,7 +24,30 @@ public class MovieResult {
         return instance;
     }
 
-    public static MovieResult setInstance(MovieResult movieResult) {
+    public static MovieResult setInstance(MovieResult movieResult){
+        /*Initialize current instance
+        * */
+        getInstance();
+
+        /*
+        * If already data present, append the incoming data
+        * */
+        if (instance.results == null || instance.results.isEmpty()/* && instance.page > movieResult.pages*/) {
+            instance.results = new ArrayList<>();
+        } else {
+            instance.results.clear();
+        }
+        instance.results.addAll(movieResult.getResults());
+
+         /*
+        * Update page number, total pages and total results
+        * */
+        instance.page = movieResult.page;
+        instance.total_pages = movieResult.total_pages;
+        instance.total_results = movieResult.total_results;
+        return instance;
+    }
+    public static MovieResult addResults(MovieResult movieResult) {
 
         /*Initialize current instance
         * */
@@ -36,7 +59,7 @@ public class MovieResult {
         if (instance.results == null || instance.results.isEmpty()/* && instance.page > movieResult.pages*/) {
             instance.results = new ArrayList<>();
         }
-        Log.d("MovieData", "setInstance: ");
+        Log.d("MovieData", "addResults: ");
         for (Result result : movieResult.getResults()) {
             if (!instance.results.contains(result)){
                 instance.results.add(result);

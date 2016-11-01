@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name">Popular Movies</string>
+
     <string name="no_internet">No Internet Connection</string>
+    <string name="something_wrong">Something wrong</string>
+    <string name="all_loaded">wAll films loaded</string>
+
     <string name="grid_view">Grid View</string>
     <string name="list_view">List View</string>
+
     <string name="movie_image">Movie Image</string>
     <string name="overview">Overview</string>
     <string name="sort">Sort</string>

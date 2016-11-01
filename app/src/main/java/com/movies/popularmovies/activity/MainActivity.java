@@ -2,6 +2,7 @@ package com.movies.popularmovies.activity;
 
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -10,7 +11,6 @@ import android.support.v7.widget.PopupMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
@@ -28,6 +28,7 @@ import com.movies.popularmovies.util.Util;
 
 public class MainActivity extends AppCompatActivity {
 
+    private int curFilter = GenerateUrl.DISCOVER;
     private ActivityMainBinding activityMain;
     private MovieAdapter movieAdapter;
     private int menuViewType;
@@ -35,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private GridLayoutManager gridLayoutManager;
     private EndlessRecyclerViewScrollListener scrollListener;
     private PopupMenu menu;
+
+    private RequestProcessor requestProcessor;
 
     private static final String TAG = "MovieData";
 
@@ -53,11 +56,13 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(activityMain.toolbar);
         if (!Util.isNetworkAvailable(this) && PreferenceUtil.getData(this) == null) {
             clearLoader();
-            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
+            Snackbar.make(activityMain.getRoot(), MainActivity.this.getString(R.string.no_internet),
+                    Snackbar.LENGTH_LONG).show();
             return;
         }
         linearLayoutManager = new LinearLayoutManager(this);
         gridLayoutManager = new GridLayoutManager(this, 2);
+        requestProcessor = new RequestProcessor(this, Request.Method.GET);
 
         setScrollListener();
         getData();
@@ -71,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
                 * */
                 if (!Util.isNetworkAvailable(MainActivity.this) && PreferenceUtil.getData(MainActivity.this) == null) {
                     activityMain.swipeToRefresh.setRefreshing(false);
-                    Toast.makeText(MainActivity.this, MainActivity.this.getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
+                    Snackbar.make(activityMain.getRoot(), MainActivity.this.getString(R.string.no_internet),
+                            Snackbar.LENGTH_LONG).show();
                     return;
                 }
 
@@ -85,12 +91,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void refreshData() {
-        RequestProcessor requestProcessor = new RequestProcessor(this, Request.Method.GET);
         requestProcessor.setListener(new RequestProcessorListener() {
             @Override
             public void onSuccess(String response) {
-                PreferenceUtil.storeData(MainActivity.this, response);
-
+                switch (curFilter){
+                    case GenerateUrl.DISCOVER:
+                        PreferenceUtil.storeData(MainActivity.this, response);
+                        break;
+                    case GenerateUrl.TOP_RATED:
+                        PreferenceUtil.storeTopRatedData(MainActivity.this, response);
+                        break;
+                    case GenerateUrl.MOST_POPULAR:
+                        PreferenceUtil.storePopularData(MainActivity.this, response);
+                        break;
+                }
                 /*
                 * If adapter is null, it should be initialized
                 * */
@@ -102,7 +116,8 @@ public class MainActivity extends AppCompatActivity {
                 * If adapter already present, it is now reloaded, so notify the adapter
                 * */
                 else {
-                    movieAdapter.notifyDataSetChanged();
+                    MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
+                    movieAdapter.notifyDataChanged();
                 }
                 clearLoader();
             }
@@ -114,10 +129,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(VolleyError error) {
-
+                Snackbar.make(activityMain.getRoot(), MainActivity.this.getString(R.string.something_wrong),
+                        Snackbar.LENGTH_LONG).show();
             }
         });
-        requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl());
+        requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl(curFilter));
     }
 
     private void setScrollListener() {
@@ -137,17 +153,17 @@ public class MainActivity extends AppCompatActivity {
                 * If all the pages are loaded, show message and return
                 * */
                 if (page > MovieResult.getInstance().getTotal_pages()) {
-                    Toast.makeText(MainActivity.this, "All films loaded", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(activityMain.getRoot(), MainActivity.this.getString(R.string.all_loaded),
+                            Snackbar.LENGTH_LONG).show();
                     return;
                 }
-                RequestProcessor requestProcessor = new RequestProcessor(MainActivity.this, Request.Method.GET);
                 requestProcessor.setListener(new RequestProcessorListener() {
                     @Override
                     public void onSuccess(String response) {
                         if (movieAdapter.getItemCount() >= page * 20) {
                             return;
                         }
-                        MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
+                        MovieResult.addResults(new Gson().fromJson(response, MovieResult.class));
                         PreferenceUtil.storeData(MainActivity.this, new Gson().toJson(MovieResult.getInstance()));
                     }
 
@@ -160,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-                requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl(page));
+                requestProcessor.execute(GenerateUrl.getDiscoverMovieUrl(page, curFilter));
             }
         };
     }
@@ -177,9 +193,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void setAdapter(String response) {
         MovieResult.setInstance(new Gson().fromJson(response, MovieResult.class));
-        movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST);
+        movieAdapter = new MovieAdapter(MainActivity.this, MovieAdapter.LIST, activityMain.recyclerView);
         activityMain.recyclerView.setAdapter(movieAdapter);
         activityMain.recyclerView.setLayoutManager(linearLayoutManager);
+        activityMain.recyclerView.clearOnScrollListeners();
         activityMain.recyclerView.addOnScrollListener(scrollListener);
     }
 
@@ -217,10 +234,12 @@ public class MainActivity extends AppCompatActivity {
                             public boolean onMenuItemClick(MenuItem item) {
                                 switch (item.getItemId()) {
                                     case R.id.most_popular:
-                                        Toast.makeText(MainActivity.this, "mos popular", Toast.LENGTH_SHORT).show();
+                                        curFilter = GenerateUrl.MOST_POPULAR;
+                                        refreshData();
                                         break;
                                     case R.id.top_rated:
-                                        Toast.makeText(MainActivity.this, "top rated", Toast.LENGTH_SHORT).show();
+                                        curFilter = GenerateUrl.TOP_RATED;
+                                        refreshData();
                                         break;
                                 }
                                 return true;

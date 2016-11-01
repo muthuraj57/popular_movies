@@ -40,10 +40,12 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private DecimalFormat decimalFormat;
     private int screenWidth;
     private int adapterSize;
+    private RecyclerView recyclerView;
 
-    public MovieAdapter(Context context, int viewType) {
+    public MovieAdapter(Context context, int viewType, RecyclerView recyclerView) {
         this.context = context;
         this.viewType = viewType;
+        this.recyclerView = recyclerView;
 
         screenWidth = Util.getDisplayMetrics(context).x;
         decimalFormat = new DecimalFormat("#.#");
@@ -53,6 +55,11 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         adapterSize = results.size();
     }
 
+    public void notifyDataChanged(){
+        results = MovieResult.getInstance().getResults();
+        adapterSize = results.size();
+        notifyDataSetChanged();
+    }
     public void setViewType(int viewType) {
         this.viewType = viewType;
     }
@@ -75,7 +82,20 @@ public class MovieAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                ;
+//                if (recyclerView.isComputingLayout()){
+//                    new Handler().post(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            try {
+//                                notifyItemRangeInserted(adapterSize + 1, results.size() - adapterSize);
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    });
+//                } else {
+//                    notifyItemRangeInserted(adapterSize + 1, results.size() - adapterSize);
+//                }
                 adapterSize = results.size();
             }
             return adapterSize;
